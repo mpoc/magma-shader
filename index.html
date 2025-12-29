@@ -303,10 +303,9 @@
         // Multiple noise layers for depth
         float noise1 = fbm(warpedPos * 0.8, 0.55, 3);
         float noise2 = fbm(warpedPos * 1.6 + vec3(10.0, 20.0, t * 0.1), 0.45, 3);
-        float noise3 = fbm(warpedPos * 3.2 + vec3(30.0, 40.0, -t * 0.15), 0.35, 2);
 
         // Combine for rich texture
-        float combinedNoise = noise1 * 0.5 + noise2 * 0.35 + noise3 * 0.15;
+        float combinedNoise = noise1 * 0.6 + noise2 * 0.4;
 
         // Add ripple effect from interactions
         float ripple = 0.0;
