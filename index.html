@@ -498,8 +498,7 @@
     function render() {
       const time = (performance.now() - startTime) / 1000;
 
-      // Smooth interpolation for snappy but organic feel
-      const lerpFactor = 0.15;
+      const lerpFactor = 1;
       const strengthLerp = 0.08;
 
       // Calculate movement velocity before updating positions
