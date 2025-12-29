@@ -257,15 +257,15 @@
         // Mouse/touch influence with smooth falloff
         vec2 mousePos = (u_mouse - 0.5) * aspect;
         float mouseDist = length(p - mousePos);
-        float mouseInfluence = u_mouseStrength * exp(-mouseDist * 2.5);
+        float mouseInfluence = u_mouseStrength * exp(-mouseDist * 1.8);
 
         // Touch points for mobile
         vec2 touch1Pos = (u_touch1 - 0.5) * aspect;
         vec2 touch2Pos = (u_touch2 - 0.5) * aspect;
         float touch1Dist = length(p - touch1Pos);
         float touch2Dist = length(p - touch2Pos);
-        float touchInfluence1 = u_touchStrength1 * exp(-touch1Dist * 2.5);
-        float touchInfluence2 = u_touchStrength2 * exp(-touch2Dist * 2.5);
+        float touchInfluence1 = u_touchStrength1 * exp(-touch1Dist * 1.8);
+        float touchInfluence2 = u_touchStrength2 * exp(-touch2Dist * 1.8);
         float totalTouchInfluence = touchInfluence1 + touchInfluence2;
 
         // Combine all influences
@@ -282,15 +282,15 @@
         vec2 interactionDisplace = vec2(0.0);
         if (mouseInfluence > 0.01) {
           vec2 toMouse = normalize(p - mousePos);
-          interactionDisplace += toMouse * mouseInfluence * 0.8;
+          interactionDisplace += toMouse * mouseInfluence * 1.4;
         }
         if (touchInfluence1 > 0.01) {
           vec2 toTouch = normalize(p - touch1Pos);
-          interactionDisplace += toTouch * touchInfluence1 * 0.8;
+          interactionDisplace += toTouch * touchInfluence1 * 1.4;
         }
         if (touchInfluence2 > 0.01) {
           vec2 toTouch = normalize(p - touch2Pos);
-          interactionDisplace += toTouch * touchInfluence2 * 0.8;
+          interactionDisplace += toTouch * touchInfluence2 * 1.4;
         }
 
         warpedPos.xy += interactionDisplace;
@@ -311,9 +311,9 @@
           // Amplitude increases with velocity for more reactive feel
           float rippleAmp = 0.2 + u_interactionVelocity * 0.2;
 
-          ripple = sin(mouseDist * rippleFreq - ripplePhase) * mouseInfluence * rippleAmp;
-          ripple += sin(touch1Dist * rippleFreq - ripplePhase) * touchInfluence1 * rippleAmp;
-          ripple += sin(touch2Dist * rippleFreq - ripplePhase) * touchInfluence2 * rippleAmp;
+          ripple = sin(mouseDist * rippleFreq - ripplePhase) * mouseInfluence * rippleAmp * 1.5;
+          ripple += sin(touch1Dist * rippleFreq - ripplePhase) * touchInfluence1 * rippleAmp * 1.5;
+          ripple += sin(touch2Dist * rippleFreq - ripplePhase) * touchInfluence2 * rippleAmp * 1.5;
         }
 
         combinedNoise += ripple;
@@ -331,9 +331,9 @@
 
         vec3 color = palette(colorIndex, spatialVar);
 
-        // Add subtle glow in interaction areas
+        // Add glow in interaction areas
         vec3 glowColor = mix(c2, c4, u_glowMix);
-        color = mix(color, glowColor, interactionInfluence * 0.4);
+        color = mix(color, glowColor, interactionInfluence * 0.65);
 
         // Depth-based brightness modulation (3D feel)
         float depthBrightness = noise1 * 0.3 + 0.7;
