@@ -105,6 +105,11 @@
       uniform float u_touchStrength1;
       uniform float u_touchStrength2;
       uniform float u_interactionVelocity;
+      uniform float u_breath1;
+      uniform float u_breath2;
+      uniform float u_breath3;
+      uniform float u_colorShift;
+      uniform float u_glowMix;
 
       // Color palette - organic psychedelic
       const vec3 c1 = vec3(0.227, 0.129, 0.439);  // #3A2170 - deep purple
@@ -254,9 +259,9 @@
         float t = u_time;
 
         // Breathing rhythm - multiple overlapping cycles (slower base frequencies)
-        float breath1 = sin(t * 0.12) * 0.5 + 0.5;
-        float breath2 = sin(t * 0.07 + 1.5) * 0.5 + 0.5;
-        float breath3 = sin(t * 0.04 + 3.0) * 0.5 + 0.5;
+        float breath1 = u_breath1;
+        float breath2 = u_breath2;
+        float breath3 = u_breath3;
         float breathCombined = (breath1 + breath2 * 0.6 + breath3 * 0.3) / 1.9;
 
         // Mouse/touch influence with smooth falloff
@@ -328,7 +333,7 @@
         colorIndex += breathCombined * 0.15;
 
         // Time-varying color shift for generative aspect
-        float colorShift = sin(t * 0.07) * 0.15 + sin(t * 0.11) * 0.1;
+        float colorShift = u_colorShift;
         colorIndex += colorShift;
 
         // Spatial color variation
@@ -337,7 +342,7 @@
         vec3 color = palette(colorIndex, spatialVar);
 
         // Add subtle glow in interaction areas
-        vec3 glowColor = mix(c2, c4, sin(t * 0.5) * 0.5 + 0.5);
+        vec3 glowColor = mix(c2, c4, u_glowMix);
         color = mix(color, glowColor, interactionInfluence * 0.4);
 
         // Depth-based brightness modulation (3D feel)
@@ -400,6 +405,11 @@
     const touchStrength1Location = gl.getUniformLocation(program, 'u_touchStrength1');
     const touchStrength2Location = gl.getUniformLocation(program, 'u_touchStrength2');
     const interactionVelocityLocation = gl.getUniformLocation(program, 'u_interactionVelocity');
+    const breath1Location = gl.getUniformLocation(program, 'u_breath1');
+    const breath2Location = gl.getUniformLocation(program, 'u_breath2');
+    const breath3Location = gl.getUniformLocation(program, 'u_breath3');
+    const colorShiftLocation = gl.getUniformLocation(program, 'u_colorShift');
+    const glowMixLocation = gl.getUniformLocation(program, 'u_glowMix');
 
     // Create fullscreen quad
     const positionBuffer = gl.createBuffer();
@@ -541,6 +551,11 @@
       gl.useProgram(program);
 
       gl.uniform1f(timeLocation, time);
+      gl.uniform1f(breath1Location, Math.sin(time * 0.12) * 0.5 + 0.5);
+      gl.uniform1f(breath2Location, Math.sin(time * 0.07 + 1.5) * 0.5 + 0.5);
+      gl.uniform1f(breath3Location, Math.sin(time * 0.04 + 3.0) * 0.5 + 0.5);
+      gl.uniform1f(colorShiftLocation, Math.sin(time * 0.07) * 0.15 + Math.sin(time * 0.11) * 0.1);
+      gl.uniform1f(glowMixLocation, Math.sin(time * 0.5) * 0.5 + 0.5);
       gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
       gl.uniform2f(mouseLocation, mouseX, mouseY);
       gl.uniform1f(mouseStrengthLocation, mouseStrength);
