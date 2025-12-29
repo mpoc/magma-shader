@@ -428,6 +428,13 @@
     let touchStrength1 = 0, touchStrength2 = 0;
     let targetTouchStrength1 = 0, targetTouchStrength2 = 0;
 
+    // Momentum state for touch points
+    let velocity1X = 0, velocity1Y = 0;
+    let velocity2X = 0, velocity2Y = 0;
+    let momentum1X = 0.5, momentum1Y = 0.5;
+    let momentum2X = 0.5, momentum2Y = 0.5;
+    let isTouching1 = false, isTouching2 = false;
+
     // Interaction velocity - builds up during movement, decays when still
     let interactionVelocity = 0;
     let targetInteractionVelocity = 0;
@@ -465,20 +472,70 @@
 
     function handleTouches(touches) {
       if (touches.length >= 1) {
-        targetTouch1X = touches[0].clientX / window.innerWidth;
-        targetTouch1Y = 1.0 - touches[0].clientY / window.innerHeight;
+        const newX = touches[0].clientX / window.innerWidth;
+        const newY = 1.0 - touches[0].clientY / window.innerHeight;
+
+        // Calculate velocity while touching
+        if (isTouching1) {
+          velocity1X = (newX - targetTouch1X) * 1.2; // Slight boost for feel
+          velocity1Y = (newY - targetTouch1Y) * 1.2;
+        }
+
+        targetTouch1X = newX;
+        targetTouch1Y = newY;
         targetTouchStrength1 = 1.0;
+        isTouching1 = true;
+
+        // Sync momentum position while touching
+        momentum1X = newX;
+        momentum1Y = newY;
       } else {
         targetTouchStrength1 = 0.0;
+        isTouching1 = false;
       }
 
       if (touches.length >= 2) {
-        targetTouch2X = touches[1].clientX / window.innerWidth;
-        targetTouch2Y = 1.0 - touches[1].clientY / window.innerHeight;
+        const newX = touches[1].clientX / window.innerWidth;
+        const newY = 1.0 - touches[1].clientY / window.innerHeight;
+
+        if (isTouching2) {
+          velocity2X = (newX - targetTouch2X) * 1.2;
+          velocity2Y = (newY - targetTouch2Y) * 1.2;
+        }
+
+        targetTouch2X = newX;
+        targetTouch2Y = newY;
         targetTouchStrength2 = 1.0;
+        isTouching2 = true;
+
+        momentum2X = newX;
+        momentum2Y = newY;
       } else {
         targetTouchStrength2 = 0.0;
+        isTouching2 = false;
       }
+    }
+
+    // Edge dampening function - slows down near edges and adds soft bounce
+    function edgeDampen(pos, vel) {
+      const margin = 0.15;  // Start slowing this far from edge
+      const minPos = margin;
+      const maxPos = 1.0 - margin;
+
+      let damping = 1.0;
+      if (pos < minPos) {
+        damping = Math.max(0, pos / margin);  // 0 at edge, 1 at margin
+      } else if (pos > maxPos) {
+        damping = Math.max(0, (1.0 - pos) / margin);
+      }
+
+      // Soft bounce if very close to edge and moving toward it
+      let bounce = 0;
+      if (pos < 0.05 && vel < 0) bounce = 0.015;
+      if (pos > 0.95 && vel > 0) bounce = -0.015;
+
+      // Apply edge damping plus base friction (0.94)
+      return vel * damping * 0.94 + bounce;
     }
 
     function resize() {
@@ -530,12 +587,37 @@
       mouseY += (targetMouseY - mouseY) * lerpFactor;
       mouseStrength += (targetMouseStrength - mouseStrength) * strengthLerp;
 
-      touch1X += (targetTouch1X - touch1X) * lerpFactor;
-      touch1Y += (targetTouch1Y - touch1Y) * lerpFactor;
-      touch2X += (targetTouch2X - touch2X) * lerpFactor;
-      touch2Y += (targetTouch2Y - touch2Y) * lerpFactor;
-      touchStrength1 += (targetTouchStrength1 - touchStrength1) * strengthLerp;
-      touchStrength2 += (targetTouchStrength2 - touchStrength2) * strengthLerp;
+      // Touch 1: momentum physics
+      if (isTouching1) {
+        // While touching, follow finger directly
+        touch1X = targetTouch1X;
+        touch1Y = targetTouch1Y;
+      } else {
+        // Released - apply momentum with edge dampening
+        velocity1X = edgeDampen(momentum1X, velocity1X);
+        velocity1Y = edgeDampen(momentum1Y, velocity1Y);
+        momentum1X = Math.max(0.01, Math.min(0.99, momentum1X + velocity1X));
+        momentum1Y = Math.max(0.01, Math.min(0.99, momentum1Y + velocity1Y));
+        touch1X = momentum1X;
+        touch1Y = momentum1Y;
+      }
+
+      // Touch 2: momentum physics
+      if (isTouching2) {
+        touch2X = targetTouch2X;
+        touch2Y = targetTouch2Y;
+      } else {
+        velocity2X = edgeDampen(momentum2X, velocity2X);
+        velocity2Y = edgeDampen(momentum2Y, velocity2Y);
+        momentum2X = Math.max(0.01, Math.min(0.99, momentum2X + velocity2X));
+        momentum2Y = Math.max(0.01, Math.min(0.99, momentum2Y + velocity2Y));
+        touch2X = momentum2X;
+        touch2Y = momentum2Y;
+      }
+
+      // Slower strength decay so effect lingers during momentum glide
+      touchStrength1 += (targetTouchStrength1 - touchStrength1) * 0.04;
+      touchStrength2 += (targetTouchStrength2 - touchStrength2) * 0.04;
 
       gl.useProgram(program);
 
