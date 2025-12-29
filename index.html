@@ -10,14 +10,14 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #0a0a0a;
     }
-    
+
     canvas {
       display: block;
       width: 100%;
@@ -26,29 +26,29 @@
       top: 0;
       left: 0;
     }
-    
+
     .github-link {
       position: fixed;
       bottom: 24px;
       right: 24px;
       z-index: 10;
       opacity: 0.45;
-      transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1), 
+      transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1),
                   transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
       mix-blend-mode: difference;
     }
-    
+
     .github-link:hover {
       opacity: 0.9;
       transform: scale(1.1);
     }
-    
+
     .github-link svg {
       width: 28px;
       height: 28px;
       fill: #fff;
     }
-    
+
     @media (max-width: 600px) {
       .github-link {
         bottom: 16px;
@@ -63,7 +63,7 @@
 </head>
 <body>
   <canvas id="canvas"></canvas>
-  
+
   <a href="https://github.com/mpoc" target="_blank" rel="noopener noreferrer" class="github-link" aria-label="GitHub Profile">
     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
@@ -73,7 +73,7 @@
   <script>
     const canvas = document.getElementById('canvas');
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    
+
     if (!gl) {
       document.body.innerHTML = '<p style="color:#fff;padding:2rem;">WebGL not supported</p>';
       throw new Error('WebGL not supported');
@@ -92,10 +92,10 @@
     // Fragment shader - the psychedelic magic
     const fragmentShaderSource = `#version 300 es
       precision highp float;
-      
+
       in vec2 v_uv;
       out vec4 fragColor;
-      
+
       uniform float u_time;
       uniform vec2 u_resolution;
       uniform vec2 u_mouse;
@@ -105,89 +105,89 @@
       uniform float u_touchStrength1;
       uniform float u_touchStrength2;
       uniform float u_interactionVelocity;
-      
+
       // Color palette - organic psychedelic
       const vec3 c1 = vec3(0.227, 0.129, 0.439);  // #3A2170 - deep purple
       const vec3 c2 = vec3(0.859, 0.514, 0.110);  // #DB831C - warm orange
       const vec3 c3 = vec3(0.745, 0.161, 0.141);  // #BE2924 - deep red
       const vec3 c4 = vec3(0.871, 0.286, 0.349);  // #DE4959 - coral pink
       const vec3 c5 = vec3(0.067, 0.502, 0.549);  // #11808C - teal
-      
+
       // Additional organic colors
       const vec3 c6 = vec3(0.082, 0.067, 0.184);  // dark void
       const vec3 c7 = vec3(0.529, 0.224, 0.314);  // dusty rose
-      
+
       // Simplex 3D noise
       vec4 permute(vec4 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
       vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-      
+
       float snoise(vec3 v) {
         const vec2 C = vec2(1.0/6.0, 1.0/3.0);
         const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-        
+
         vec3 i = floor(v + dot(v, C.yyy));
         vec3 x0 = v - i + dot(i, C.xxx);
-        
+
         vec3 g = step(x0.yzx, x0.xyz);
         vec3 l = 1.0 - g;
         vec3 i1 = min(g.xyz, l.zxy);
         vec3 i2 = max(g.xyz, l.zxy);
-        
+
         vec3 x1 = x0 - i1 + C.xxx;
         vec3 x2 = x0 - i2 + C.yyy;
         vec3 x3 = x0 - D.yyy;
-        
+
         i = mod(i, 289.0);
         vec4 p = permute(permute(permute(
           i.z + vec4(0.0, i1.z, i2.z, 1.0))
           + i.y + vec4(0.0, i1.y, i2.y, 1.0))
           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-          
+
         float n_ = 1.0/7.0;
         vec3 ns = n_ * D.wyz - D.xzx;
-        
+
         vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-        
+
         vec4 x_ = floor(j * ns.z);
         vec4 y_ = floor(j - 7.0 * x_);
-        
+
         vec4 x = x_ *ns.x + ns.yyyy;
         vec4 y = y_ *ns.x + ns.yyyy;
         vec4 h = 1.0 - abs(x) - abs(y);
-        
+
         vec4 b0 = vec4(x.xy, y.xy);
         vec4 b1 = vec4(x.zw, y.zw);
-        
+
         vec4 s0 = floor(b0)*2.0 + 1.0;
         vec4 s1 = floor(b1)*2.0 + 1.0;
         vec4 sh = -step(h, vec4(0.0));
-        
+
         vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
         vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-        
+
         vec3 p0 = vec3(a0.xy, h.x);
         vec3 p1 = vec3(a0.zw, h.y);
         vec3 p2 = vec3(a1.xy, h.z);
         vec3 p3 = vec3(a1.zw, h.w);
-        
+
         vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
         p0 *= norm.x;
         p1 *= norm.y;
         p2 *= norm.z;
         p3 *= norm.w;
-        
+
         vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
         m = m * m;
         return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
       }
-      
+
       // Fractional Brownian Motion - layered noise for organic feel
       float fbm(vec3 p, float persistence, int octaves) {
         float value = 0.0;
         float amplitude = 1.0;
         float frequency = 1.0;
         float maxValue = 0.0;
-        
+
         for(int i = 0; i < 6; i++) {
           if(i >= octaves) break;
           value += amplitude * snoise(p * frequency);
@@ -195,34 +195,34 @@
           amplitude *= persistence;
           frequency *= 2.0;
         }
-        
+
         return value / maxValue;
       }
-      
+
       // Domain warping for that organic, lifeform feel
       vec3 warp(vec3 p, float t) {
         float slow = t * 0.08;
         float med = t * 0.15;
-        
+
         vec3 q = vec3(
           fbm(p + vec3(0.0, 0.0, slow), 0.5, 4),
           fbm(p + vec3(5.2, 1.3, slow), 0.5, 4),
           fbm(p + vec3(2.1, 8.3, slow), 0.5, 4)
         );
-        
+
         vec3 r = vec3(
           fbm(p + 4.0 * q + vec3(1.7, 9.2, med), 0.5, 4),
           fbm(p + 4.0 * q + vec3(8.3, 2.8, med), 0.5, 4),
           fbm(p + 4.0 * q + vec3(3.1, 4.7, med), 0.5, 4)
         );
-        
+
         return p + 2.0 * r;
       }
-      
+
       // Smooth color mixing
       vec3 palette(float t, float variation) {
         t = fract(t + variation * 0.1);
-        
+
         vec3 colors[7];
         colors[0] = c6;
         colors[1] = c1;
@@ -231,39 +231,39 @@
         colors[4] = c3;
         colors[5] = c2;
         colors[6] = c4;
-        
+
         float scaledT = t * 6.0;
         int idx = int(floor(scaledT));
         float frac = fract(scaledT);
-        
+
         // Smooth interpolation
         frac = frac * frac * (3.0 - 2.0 * frac);
-        
+
         vec3 col1 = colors[idx];
         vec3 col2 = colors[(idx + 1) % 7];
-        
+
         return mix(col1, col2, frac);
       }
-      
+
       void main() {
         vec2 uv = v_uv;
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 p = (uv - 0.5) * aspect;
-        
+
         // Constant time - no velocity scaling to prevent accumulation bugs
         float t = u_time;
-        
+
         // Breathing rhythm - multiple overlapping cycles (slower base frequencies)
         float breath1 = sin(t * 0.12) * 0.5 + 0.5;
         float breath2 = sin(t * 0.07 + 1.5) * 0.5 + 0.5;
         float breath3 = sin(t * 0.04 + 3.0) * 0.5 + 0.5;
         float breathCombined = (breath1 + breath2 * 0.6 + breath3 * 0.3) / 1.9;
-        
+
         // Mouse/touch influence with smooth falloff
         vec2 mousePos = (u_mouse - 0.5) * aspect;
         float mouseDist = length(p - mousePos);
         float mouseInfluence = u_mouseStrength * exp(-mouseDist * 2.5);
-        
+
         // Touch points for mobile
         vec2 touch1Pos = (u_touch1 - 0.5) * aspect;
         vec2 touch2Pos = (u_touch2 - 0.5) * aspect;
@@ -272,17 +272,17 @@
         float touchInfluence1 = u_touchStrength1 * exp(-touch1Dist * 2.5);
         float touchInfluence2 = u_touchStrength2 * exp(-touch2Dist * 2.5);
         float totalTouchInfluence = touchInfluence1 + touchInfluence2;
-        
+
         // Combine all influences
         float interactionInfluence = mouseInfluence + totalTouchInfluence;
-        
+
         // Create 3D position with depth
         float depth = 0.5 + 0.3 * breathCombined;
         vec3 pos3d = vec3(p * 1.5, depth + t * 0.04);
-        
+
         // Apply warping for organic movement
         vec3 warpedPos = warp(pos3d, t);
-        
+
         // Add interaction-based displacement
         vec2 interactionDisplace = vec2(0.0);
         if (mouseInfluence > 0.01) {
@@ -297,68 +297,68 @@
           vec2 toTouch = normalize(p - touch2Pos);
           interactionDisplace += toTouch * touchInfluence2 * 0.8;
         }
-        
+
         warpedPos.xy += interactionDisplace;
-        
+
         // Multiple noise layers for depth
         float noise1 = fbm(warpedPos * 0.8, 0.55, 5);
         float noise2 = fbm(warpedPos * 1.6 + vec3(10.0, 20.0, t * 0.1), 0.45, 4);
         float noise3 = fbm(warpedPos * 3.2 + vec3(30.0, 40.0, -t * 0.15), 0.35, 3);
-        
+
         // Combine for rich texture
         float combinedNoise = noise1 * 0.5 + noise2 * 0.35 + noise3 * 0.15;
-        
+
         // Add ripple effect from interactions
         float ripple = 0.0;
         if (interactionInfluence > 0.01) {
           float rippleFreq = 6.0 + interactionInfluence * 12.0;
           float ripplePhase = t * 2.5;
-          
+
           // Amplitude increases with velocity for more reactive feel
           float rippleAmp = 0.2 + u_interactionVelocity * 0.2;
-          
+
           ripple = sin(mouseDist * rippleFreq - ripplePhase) * mouseInfluence * rippleAmp;
           ripple += sin(touch1Dist * rippleFreq - ripplePhase) * touchInfluence1 * rippleAmp;
           ripple += sin(touch2Dist * rippleFreq - ripplePhase) * touchInfluence2 * rippleAmp;
         }
-        
+
         combinedNoise += ripple;
-        
+
         // Color mapping with variation
         float colorIndex = combinedNoise * 0.5 + 0.5;
         colorIndex += breathCombined * 0.15;
-        
+
         // Time-varying color shift for generative aspect
         float colorShift = sin(t * 0.07) * 0.15 + sin(t * 0.11) * 0.1;
         colorIndex += colorShift;
-        
+
         // Spatial color variation
         float spatialVar = snoise(vec3(p * 0.5, t * 0.05));
-        
+
         vec3 color = palette(colorIndex, spatialVar);
-        
+
         // Add subtle glow in interaction areas
         vec3 glowColor = mix(c2, c4, sin(t * 0.5) * 0.5 + 0.5);
         color = mix(color, glowColor, interactionInfluence * 0.4);
-        
+
         // Depth-based brightness modulation (3D feel)
         float depthBrightness = noise1 * 0.3 + 0.7;
         depthBrightness += breathCombined * 0.15;
         color *= depthBrightness;
-        
+
         // Subtle vignette
         float vignette = 1.0 - length(uv - 0.5) * 0.5;
         vignette = smoothstep(0.0, 1.0, vignette);
         color *= vignette;
-        
+
         // Very subtle film grain for organic feel
         float grain = fract(sin(dot(uv * t, vec2(12.9898, 78.233))) * 43758.5453);
         color += (grain - 0.5) * 0.03;
-        
+
         // Ensure colors stay in valid range with subtle tone mapping
         color = color / (1.0 + color * 0.1);
         color = pow(color, vec3(0.95)); // Slight gamma for richness
-        
+
         fragColor = vec4(color, 1.0);
       }
     `;
@@ -375,9 +375,9 @@
 
     const fragmentShaderSourceGL1 = `
       precision highp float;
-      
+
       varying vec2 v_uv;
-      
+
       uniform float u_time;
       uniform vec2 u_resolution;
       uniform vec2 u_mouse;
@@ -387,7 +387,7 @@
       uniform float u_touchStrength1;
       uniform float u_touchStrength2;
       uniform float u_interactionVelocity;
-      
+
       const vec3 c1 = vec3(0.227, 0.129, 0.439);
       const vec3 c2 = vec3(0.859, 0.514, 0.110);
       const vec3 c3 = vec3(0.745, 0.161, 0.141);
@@ -395,112 +395,112 @@
       const vec3 c5 = vec3(0.067, 0.502, 0.549);
       const vec3 c6 = vec3(0.082, 0.067, 0.184);
       const vec3 c7 = vec3(0.529, 0.224, 0.314);
-      
+
       vec4 permute(vec4 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
       vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-      
+
       float snoise(vec3 v) {
         const vec2 C = vec2(1.0/6.0, 1.0/3.0);
         const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-        
+
         vec3 i = floor(v + dot(v, C.yyy));
         vec3 x0 = v - i + dot(i, C.xxx);
-        
+
         vec3 g = step(x0.yzx, x0.xyz);
         vec3 l = 1.0 - g;
         vec3 i1 = min(g.xyz, l.zxy);
         vec3 i2 = max(g.xyz, l.zxy);
-        
+
         vec3 x1 = x0 - i1 + C.xxx;
         vec3 x2 = x0 - i2 + C.yyy;
         vec3 x3 = x0 - D.yyy;
-        
+
         i = mod(i, 289.0);
         vec4 p = permute(permute(permute(
           i.z + vec4(0.0, i1.z, i2.z, 1.0))
           + i.y + vec4(0.0, i1.y, i2.y, 1.0))
           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-          
+
         float n_ = 1.0/7.0;
         vec3 ns = n_ * D.wyz - D.xzx;
-        
+
         vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-        
+
         vec4 x_ = floor(j * ns.z);
         vec4 y_ = floor(j - 7.0 * x_);
-        
+
         vec4 x = x_ *ns.x + ns.yyyy;
         vec4 y = y_ *ns.x + ns.yyyy;
         vec4 h = 1.0 - abs(x) - abs(y);
-        
+
         vec4 b0 = vec4(x.xy, y.xy);
         vec4 b1 = vec4(x.zw, y.zw);
-        
+
         vec4 s0 = floor(b0)*2.0 + 1.0;
         vec4 s1 = floor(b1)*2.0 + 1.0;
         vec4 sh = -step(h, vec4(0.0));
-        
+
         vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
         vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-        
+
         vec3 p0 = vec3(a0.xy, h.x);
         vec3 p1 = vec3(a0.zw, h.y);
         vec3 p2 = vec3(a1.xy, h.z);
         vec3 p3 = vec3(a1.zw, h.w);
-        
+
         vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
         p0 *= norm.x;
         p1 *= norm.y;
         p2 *= norm.z;
         p3 *= norm.w;
-        
+
         vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
         m = m * m;
         return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
       }
-      
+
       float fbm(vec3 p, float persistence) {
         float value = 0.0;
         float amplitude = 1.0;
         float frequency = 1.0;
         float maxValue = 0.0;
-        
+
         for(int i = 0; i < 5; i++) {
           value += amplitude * snoise(p * frequency);
           maxValue += amplitude;
           amplitude *= persistence;
           frequency *= 2.0;
         }
-        
+
         return value / maxValue;
       }
-      
+
       vec3 warp(vec3 p, float t) {
         float slow = t * 0.08;
         float med = t * 0.15;
-        
+
         vec3 q = vec3(
           fbm(p + vec3(0.0, 0.0, slow), 0.5),
           fbm(p + vec3(5.2, 1.3, slow), 0.5),
           fbm(p + vec3(2.1, 8.3, slow), 0.5)
         );
-        
+
         vec3 r = vec3(
           fbm(p + 4.0 * q + vec3(1.7, 9.2, med), 0.5),
           fbm(p + 4.0 * q + vec3(8.3, 2.8, med), 0.5),
           fbm(p + 4.0 * q + vec3(3.1, 4.7, med), 0.5)
         );
-        
+
         return p + 2.0 * r;
       }
-      
+
       vec3 palette(float t, float variation) {
         t = fract(t + variation * 0.1);
         float scaledT = t * 6.0;
         int idx = int(floor(scaledT));
         float fr = fract(scaledT);
         fr = fr * fr * (3.0 - 2.0 * fr);
-        
+
         vec3 col1, col2;
         if (idx == 0) { col1 = c6; col2 = c1; }
         else if (idx == 1) { col1 = c1; col2 = c5; }
@@ -508,27 +508,27 @@
         else if (idx == 3) { col1 = c7; col2 = c3; }
         else if (idx == 4) { col1 = c3; col2 = c2; }
         else { col1 = c2; col2 = c4; }
-        
+
         return mix(col1, col2, fr);
       }
-      
+
       void main() {
         vec2 uv = v_uv;
         vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
         vec2 p = (uv - 0.5) * aspect;
-        
+
         // Constant time - no velocity scaling to prevent accumulation bugs
         float t = u_time;
-        
+
         float breath1 = sin(t * 0.12) * 0.5 + 0.5;
         float breath2 = sin(t * 0.07 + 1.5) * 0.5 + 0.5;
         float breath3 = sin(t * 0.04 + 3.0) * 0.5 + 0.5;
         float breathCombined = (breath1 + breath2 * 0.6 + breath3 * 0.3) / 1.9;
-        
+
         vec2 mousePos = (u_mouse - 0.5) * aspect;
         float mouseDist = length(p - mousePos);
         float mouseInfluence = u_mouseStrength * exp(-mouseDist * 2.5);
-        
+
         vec2 touch1Pos = (u_touch1 - 0.5) * aspect;
         vec2 touch2Pos = (u_touch2 - 0.5) * aspect;
         float touch1Dist = length(p - touch1Pos);
@@ -536,14 +536,14 @@
         float touchInfluence1 = u_touchStrength1 * exp(-touch1Dist * 2.5);
         float touchInfluence2 = u_touchStrength2 * exp(-touch2Dist * 2.5);
         float totalTouchInfluence = touchInfluence1 + touchInfluence2;
-        
+
         float interactionInfluence = mouseInfluence + totalTouchInfluence;
-        
+
         float depth = 0.5 + 0.3 * breathCombined;
         vec3 pos3d = vec3(p * 1.5, depth + t * 0.04);
-        
+
         vec3 warpedPos = warp(pos3d, t);
-        
+
         vec2 interactionDisplace = vec2(0.0);
         if (mouseInfluence > 0.01) {
           vec2 toMouse = normalize(p - mousePos + vec2(0.0001));
@@ -557,56 +557,56 @@
           vec2 toTouch = normalize(p - touch2Pos + vec2(0.0001));
           interactionDisplace += toTouch * touchInfluence2 * 0.8;
         }
-        
+
         warpedPos.xy += interactionDisplace;
-        
+
         float noise1 = fbm(warpedPos * 0.8, 0.55);
         float noise2 = fbm(warpedPos * 1.6 + vec3(10.0, 20.0, t * 0.1), 0.45);
         float noise3 = fbm(warpedPos * 3.2 + vec3(30.0, 40.0, -t * 0.15), 0.35);
-        
+
         float combinedNoise = noise1 * 0.5 + noise2 * 0.35 + noise3 * 0.15;
-        
+
         float ripple = 0.0;
         if (interactionInfluence > 0.01) {
           float rippleFreq = 6.0 + interactionInfluence * 12.0;
           float ripplePhase = t * 2.5;
-          
+
           float rippleAmp = 0.2 + u_interactionVelocity * 0.2;
-          
+
           ripple = sin(mouseDist * rippleFreq - ripplePhase) * mouseInfluence * rippleAmp;
           ripple += sin(touch1Dist * rippleFreq - ripplePhase) * touchInfluence1 * rippleAmp;
           ripple += sin(touch2Dist * rippleFreq - ripplePhase) * touchInfluence2 * rippleAmp;
         }
-        
+
         combinedNoise += ripple;
-        
+
         float colorIndex = combinedNoise * 0.5 + 0.5;
         colorIndex += breathCombined * 0.15;
-        
+
         float colorShift = sin(t * 0.07) * 0.15 + sin(t * 0.11) * 0.1;
         colorIndex += colorShift;
-        
+
         float spatialVar = snoise(vec3(p * 0.5, t * 0.05));
-        
+
         vec3 color = palette(colorIndex, spatialVar);
-        
+
         vec3 glowColor = mix(c2, c4, sin(t * 0.5) * 0.5 + 0.5);
         color = mix(color, glowColor, interactionInfluence * 0.4);
-        
+
         float depthBrightness = noise1 * 0.3 + 0.7;
         depthBrightness += breathCombined * 0.15;
         color *= depthBrightness;
-        
+
         float vignette = 1.0 - length(uv - 0.5) * 0.5;
         vignette = smoothstep(0.0, 1.0, vignette);
         color *= vignette;
-        
+
         float grain = fract(sin(dot(uv * t, vec2(12.9898, 78.233))) * 43758.5453);
         color += (grain - 0.5) * 0.03;
-        
+
         color = color / (1.0 + color * 0.1);
         color = pow(color, vec3(0.95));
-        
+
         gl_FragColor = vec4(color, 1.0);
       }
     `;
@@ -673,7 +673,7 @@
     let prevMouseX = 0.5, prevMouseY = 0.5;
     let mouseStrength = 0;
     let targetMouseStrength = 0;
-    
+
     let touch1X = 0.5, touch1Y = 0.5;
     let touch2X = 0.5, touch2Y = 0.5;
     let targetTouch1X = 0.5, targetTouch1Y = 0.5;
@@ -681,7 +681,7 @@
     let prevTouch1X = 0.5, prevTouch1Y = 0.5;
     let touchStrength1 = 0, touchStrength2 = 0;
     let targetTouchStrength1 = 0, targetTouchStrength2 = 0;
-    
+
     // Interaction velocity - builds up during movement, decays when still
     let interactionVelocity = 0;
     let targetInteractionVelocity = 0;
@@ -725,7 +725,7 @@
       } else {
         targetTouchStrength1 = 0.0;
       }
-      
+
       if (touches.length >= 2) {
         targetTouch2X = touches[1].clientX / window.innerWidth;
         targetTouch2Y = 1.0 - touches[1].clientY / window.innerHeight;
@@ -753,16 +753,16 @@
       // Smooth interpolation for snappy but organic feel
       const lerpFactor = 0.15;
       const strengthLerp = 0.08;
-      
+
       // Calculate movement velocity before updating positions
       const mouseDeltaX = targetMouseX - prevMouseX;
       const mouseDeltaY = targetMouseY - prevMouseY;
       const mouseMovement = Math.sqrt(mouseDeltaX * mouseDeltaX + mouseDeltaY * mouseDeltaY);
-      
+
       const touchDeltaX = targetTouch1X - prevTouch1X;
       const touchDeltaY = targetTouch1Y - prevTouch1Y;
       const touchMovement = Math.sqrt(touchDeltaX * touchDeltaX + touchDeltaY * touchDeltaY);
-      
+
       // Build up velocity when moving, with a cap
       const movementIntensity = Math.min((mouseMovement + touchMovement) * 12, 1.0);
       if (movementIntensity > 0.01) {
@@ -771,20 +771,20 @@
         // Decay faster when not moving
         targetInteractionVelocity *= 0.92;
       }
-      
+
       // Smooth the velocity with faster response
       interactionVelocity += (targetInteractionVelocity - interactionVelocity) * 0.12;
-      
+
       // Store previous positions for next frame
       prevMouseX = targetMouseX;
       prevMouseY = targetMouseY;
       prevTouch1X = targetTouch1X;
       prevTouch1Y = targetTouch1Y;
-      
+
       mouseX += (targetMouseX - mouseX) * lerpFactor;
       mouseY += (targetMouseY - mouseY) * lerpFactor;
       mouseStrength += (targetMouseStrength - mouseStrength) * strengthLerp;
-      
+
       touch1X += (targetTouch1X - touch1X) * lerpFactor;
       touch1Y += (targetTouch1Y - touch1Y) * lerpFactor;
       touch2X += (targetTouch2X - touch2X) * lerpFactor;
@@ -793,7 +793,7 @@
       touchStrength2 += (targetTouchStrength2 - touchStrength2) * strengthLerp;
 
       gl.useProgram(program);
-      
+
       gl.uniform1f(timeLocation, time);
       gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
       gl.uniform2f(mouseLocation, mouseX, mouseY);
