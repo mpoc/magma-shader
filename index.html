@@ -477,8 +477,9 @@
 
         // Calculate velocity while touching
         if (isTouching1) {
-          velocity1X = (newX - targetTouch1X) * 1.2; // Slight boost for feel
-          velocity1Y = (newY - targetTouch1Y) * 1.2;
+          let vx = (newX - targetTouch1X) * 1.2;
+          let vy = (newY - targetTouch1Y) * 1.2;
+          [velocity1X, velocity1Y] = clampVelocity(vx, vy);
         }
 
         targetTouch1X = newX;
@@ -499,8 +500,9 @@
         const newY = 1.0 - touches[1].clientY / window.innerHeight;
 
         if (isTouching2) {
-          velocity2X = (newX - targetTouch2X) * 1.2;
-          velocity2Y = (newY - targetTouch2Y) * 1.2;
+          let vx = (newX - targetTouch2X) * 1.2;
+          let vy = (newY - targetTouch2Y) * 1.2;
+          [velocity2X, velocity2Y] = clampVelocity(vx, vy);
         }
 
         targetTouch2X = newX;
@@ -514,6 +516,18 @@
         targetTouchStrength2 = 0.0;
         isTouching2 = false;
       }
+    }
+
+    // Max speed limit for momentum
+    const MAX_VELOCITY = 0.04;
+
+    function clampVelocity(vx, vy) {
+      const speed = Math.sqrt(vx * vx + vy * vy);
+      if (speed > MAX_VELOCITY) {
+        const scale = MAX_VELOCITY / speed;
+        return [vx * scale, vy * scale];
+      }
+      return [vx, vy];
     }
 
     // Edge dampening function - slows down near edges and adds soft bounce
